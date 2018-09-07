@@ -12,26 +12,12 @@ class TodoListViewController: UITableViewController {
 
   var itemArray = [Item]()
   
-  let defaults = UserDefaults.standard
+  let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
   
   override func viewDidLoad() {
     super.viewDidLoad()
     
-    let newItem = Item()
-    newItem.title = "Find Mike"
-    itemArray.append(newItem)
-    
-    let newItem2 = Item()
-    newItem2.title = "Buy Eggs"
-    itemArray.append(newItem2)
-    
-    let newItem3 = Item()
-    newItem3.title = "Destroy Demogorgon"
-    itemArray.append(newItem3)
-    
-    if let items = UserDefaults.standard.array(forKey: "TodoListArray") as? [Item] {
-      itemArray = items
-    }
+    loadItems()
     
   }
 
@@ -40,7 +26,7 @@ class TodoListViewController: UITableViewController {
     // Dispose of any resources that can be recreated.
   }
   
-  //MARK - Tableview Datasource Methods
+  //MARK: - Tableview Datasource Methods
   
   override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     return itemArray.count
@@ -63,7 +49,7 @@ class TodoListViewController: UITableViewController {
     return cell
   }
   
-  //MARK - TableView Delegate Methods
+  //MARK: - TableView Delegate Methods
   
   // What to do when a row is selected.
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -71,14 +57,14 @@ class TodoListViewController: UITableViewController {
     // Inverts the 'done' instance variable value.
     itemArray[indexPath.row].done = !itemArray[indexPath.row].done
     
-    tableView.reloadData()
+    self.saveItems()
     
     // Deselect the cell, so that it is no longer highlighted
     tableView.deselectRow(at: indexPath, animated: true)
     
   }
 
-  //MARK - Add New Items
+  //MARK: - Add New Items
   @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
     
     var textField = UITextField()
@@ -93,7 +79,8 @@ class TodoListViewController: UITableViewController {
       
       self.itemArray.append(newItem)
       
-      self.defaults.set(self.itemArray, forKey: "TodoListArray")
+      self.saveItems()
+      
       
       self.tableView.reloadData()
     }
@@ -110,6 +97,34 @@ class TodoListViewController: UITableViewController {
     present(alert, animated: true, completion: nil)
     
   }
+  
+  //MARK: - Model Manipulation Methods
+  
+  func saveItems() {
+    // Create new encoder object, to encode new plist. As the encode method can throw an error,
+    // must place within a do catch block, with try statements.
+    let encoder = PropertyListEncoder()
+    do {
+      let data = try encoder.encode(itemArray)
+      try data.write(to: dataFilePath!)
+    } catch {
+      print("Error encoding item array, \(error)")
+    } // catch
+
+    self.tableView.reloadData()
+  } // saveItems()
+  
+  
+  func loadItems() {
+    if let data = try? Data(contentsOf: dataFilePath!) {
+      let decoder = PropertyListDecoder()
+      do {
+        try itemArray = decoder.decode([Item].self, from: data)
+      } catch {
+        print("Error decoding item array, \(error)")
+      } // catch
+    }
+  } // loadItems()
   
   
 }
