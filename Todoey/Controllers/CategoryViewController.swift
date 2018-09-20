@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class CategoryViewController: SwipeTableViewController {
   
@@ -17,12 +18,14 @@ class CategoryViewController: SwipeTableViewController {
   var categories: Results<Category>?
   
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
+  override func viewDidLoad() {
+    super.viewDidLoad()
+  
+    loadCategories()
+  
+    tableView.separatorStyle = .none
       
-        loadCategories()
-      
-    } // viewDidLoad()
+  } // viewDidLoad()
   
   //MARK: - TableView Datasource Methods
   
@@ -40,6 +43,15 @@ class CategoryViewController: SwipeTableViewController {
     // cell visible with message to say no categories.
     cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added yet"
     
+    if let category = categories?[indexPath.row] {
+      
+      guard let categoryBackgroundColour = UIColor(hexString: category.categoryColour) else {fatalError()}
+    
+      cell.backgroundColor = categoryBackgroundColour
+      
+      cell.textLabel?.textColor = ContrastColorOf(categoryBackgroundColour, returnFlat: true)
+    }
+  
     return cell
   }
   
@@ -109,9 +121,11 @@ class CategoryViewController: SwipeTableViewController {
       
       let newCategory = Category()
       newCategory.name = textField.text!
+      // Persist random background colour for newly created cell, storing the hexValue of the random
+      // colour in a string.
+      newCategory.categoryColour = UIColor.randomFlat.hexValue()
       
       self.save(category: newCategory)
-      
     }
     
     alert.addTextField { (alertTextField) in
@@ -123,7 +137,6 @@ class CategoryViewController: SwipeTableViewController {
     
     // Show the alert
     present(alert, animated: true, completion: nil)
-    
-  }
+  } // addButtonPressed
   
 } // class
